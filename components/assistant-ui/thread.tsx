@@ -2,6 +2,7 @@ import {
   ActionBarPrimitive,
   BranchPickerPrimitive,
   ComposerPrimitive,
+  ErrorPrimitive,
   MessagePrimitive,
   ThreadPrimitive,
 } from "@assistant-ui/react";
@@ -21,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { MarkdownText } from "@/components/assistant-ui/markdown-text";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
-import { ToolFallback } from "./tool-fallback";
+import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
 
 export const Thread: FC = () => {
   return (
@@ -59,9 +60,9 @@ const ThreadScrollToBottom: FC = () => {
   return (
     <ThreadPrimitive.ScrollToBottom asChild>
       <TooltipIconButton
-        tooltip="Scroll to bottom"
+        tooltip="滾動到底部"
         variant="outline"
-        className="absolute -top-8 rounded-full disabled:invisible"
+        className="absolute -top-8 rounded-full disabled:invisible scroll-to-bottom"
       >
         <ArrowDownIcon />
       </TooltipIconButton>
@@ -74,7 +75,12 @@ const ThreadWelcome: FC = () => {
     <ThreadPrimitive.Empty>
       <div className="flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col">
         <div className="flex w-full flex-grow flex-col items-center justify-center">
-          <p className="mt-4 font-medium">How can I help you today?</p>
+          <p className="mt-4 font-medium text-lg">
+            今天我可以如何協助您？
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground text-center">
+            體驗 AI 助手的強大功能：天氣查詢、數學計算、頁面導覽和創意寫作
+          </p>
         </div>
         <ThreadWelcomeSuggestions />
       </div>
@@ -84,25 +90,64 @@ const ThreadWelcome: FC = () => {
 
 const ThreadWelcomeSuggestions: FC = () => {
   return (
-    <div className="mt-3 flex w-full items-stretch justify-center gap-4">
+    <div className="mt-3 grid w-full max-w-[var(--thread-max-width)] grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       <ThreadPrimitive.Suggestion
-        className="hover:bg-muted/80 flex max-w-sm grow basis-0 flex-col items-center justify-center rounded-lg border p-3 transition-colors ease-in"
-        prompt="What is the weather in Tokyo?"
+        className="suggestion-card flex flex-col items-center justify-center min-h-[80px] cursor-pointer group"
+        prompt="東京現在的天氣如何？"
         method="replace"
         autoSend
       >
-        <span className="line-clamp-2 text-ellipsis text-sm font-semibold">
-          What is the weather in Tokyo?
+        <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">🌤️</span>
+        <span className="line-clamp-2 text-ellipsis text-xs font-medium text-center text-muted-foreground group-hover:text-foreground transition-colors">
+          東京天氣查詢
         </span>
       </ThreadPrimitive.Suggestion>
+      
       <ThreadPrimitive.Suggestion
-        className="hover:bg-muted/80 flex max-w-sm grow basis-0 flex-col items-center justify-center rounded-lg border p-3 transition-colors ease-in"
-        prompt="What is assistant-ui?"
+        className="suggestion-card flex flex-col items-center justify-center min-h-[80px] cursor-pointer group"
+        prompt="計算 25 * 37 + 108 的結果"
         method="replace"
         autoSend
       >
-        <span className="line-clamp-2 text-ellipsis text-sm font-semibold">
-          What is assistant-ui?
+        <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">🧮</span>
+        <span className="line-clamp-2 text-ellipsis text-xs font-medium text-center text-muted-foreground group-hover:text-foreground transition-colors">
+          數學計算
+        </span>
+      </ThreadPrimitive.Suggestion>
+      
+      <ThreadPrimitive.Suggestion
+        className="suggestion-card flex flex-col items-center justify-center min-h-[80px] cursor-pointer group"
+        prompt="帶我回到首頁"
+        method="replace"
+        autoSend
+      >
+        <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">🧭</span>
+        <span className="line-clamp-2 text-ellipsis text-xs font-medium text-center text-muted-foreground group-hover:text-foreground transition-colors">
+          頁面導覽
+        </span>
+      </ThreadPrimitive.Suggestion>
+      
+      <ThreadPrimitive.Suggestion
+        className="suggestion-card flex flex-col items-center justify-center min-h-[80px] cursor-pointer group"
+        prompt="寫一首關於春天的詩"
+        method="replace"
+        autoSend
+      >
+        <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">✨</span>
+        <span className="line-clamp-2 text-ellipsis text-xs font-medium text-center text-muted-foreground group-hover:text-foreground transition-colors">
+          文本生成
+        </span>
+      </ThreadPrimitive.Suggestion>
+      
+      <ThreadPrimitive.Suggestion
+        className="suggestion-card flex flex-col items-center justify-center min-h-[80px] cursor-pointer group"
+        prompt="告訴我一個有趣的科學冷知識"
+        method="replace"
+        autoSend
+      >
+        <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">🔬</span>
+        <span className="line-clamp-2 text-ellipsis text-xs font-medium text-center text-muted-foreground group-hover:text-foreground transition-colors">
+          隨機事實
         </span>
       </ThreadPrimitive.Suggestion>
     </div>
@@ -115,7 +160,7 @@ const Composer: FC = () => {
       <ComposerPrimitive.Input
         rows={1}
         autoFocus
-        placeholder="Write a message..."
+        placeholder="輸入訊息..."
         className="placeholder:text-muted-foreground max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed"
       />
       <ComposerAction />
@@ -129,9 +174,9 @@ const ComposerAction: FC = () => {
       <ThreadPrimitive.If running={false}>
         <ComposerPrimitive.Send asChild>
           <TooltipIconButton
-            tooltip="Send"
+            tooltip="發送"
             variant="default"
-            className="my-2.5 size-8 p-2 transition-opacity ease-in"
+            className="my-2.5 size-8 p-2 transition-opacity ease-in btn-primary"
           >
             <SendHorizontalIcon />
           </TooltipIconButton>
@@ -140,9 +185,9 @@ const ComposerAction: FC = () => {
       <ThreadPrimitive.If running>
         <ComposerPrimitive.Cancel asChild>
           <TooltipIconButton
-            tooltip="Cancel"
+            tooltip="停止"
             variant="default"
-            className="my-2.5 size-8 p-2 transition-opacity ease-in"
+            className="my-2.5 size-8 p-2 transition-opacity ease-in btn-destructive"
           >
             <CircleStopIcon />
           </TooltipIconButton>
@@ -173,11 +218,11 @@ const UserActionBar: FC = () => {
       autohide="not-last"
       className="flex flex-col items-end col-start-1 row-start-2 mr-3 mt-2.5"
     >
-      <ActionBarPrimitive.Edit asChild>
-        <TooltipIconButton tooltip="Edit">
-          <PencilIcon />
-        </TooltipIconButton>
-      </ActionBarPrimitive.Edit>
+          <ActionBarPrimitive.Edit asChild>
+      <TooltipIconButton tooltip="編輯">
+        <PencilIcon />
+      </TooltipIconButton>
+    </ActionBarPrimitive.Edit>
     </ActionBarPrimitive.Root>
   );
 };
@@ -189,10 +234,10 @@ const EditComposer: FC = () => {
 
       <div className="mx-3 mb-3 flex items-center justify-center gap-2 self-end">
         <ComposerPrimitive.Cancel asChild>
-          <Button variant="ghost">Cancel</Button>
+          <Button variant="ghost" className="btn-secondary">取消</Button>
         </ComposerPrimitive.Cancel>
         <ComposerPrimitive.Send asChild>
-          <Button>Send</Button>
+          <Button className="btn-primary">發送</Button>
         </ComposerPrimitive.Send>
       </div>
     </ComposerPrimitive.Root>
@@ -203,15 +248,29 @@ const AssistantMessage: FC = () => {
   return (
     <MessagePrimitive.Root className="grid grid-cols-[auto_auto_1fr] grid-rows-[auto_1fr] relative w-full max-w-[var(--thread-max-width)] py-4">
       <div className="text-foreground max-w-[calc(var(--thread-max-width)*0.8)] break-words leading-7 col-span-2 col-start-2 row-start-1 my-1.5">
-        <MessagePrimitive.Content
-          components={{ Text: MarkdownText, tools: { Fallback: ToolFallback } }}
+        <MessagePrimitive.Content 
+          components={{ 
+            Text: MarkdownText,
+            tools: { Fallback: ToolFallback }
+          }} 
         />
+        <MessageError />
       </div>
 
       <AssistantActionBar />
 
       <BranchPicker className="col-start-2 row-start-2 -ml-2 mr-2" />
     </MessagePrimitive.Root>
+  );
+};
+
+const MessageError: FC = () => {
+  return (
+    <MessagePrimitive.Error>
+      <ErrorPrimitive.Root className="border-destructive bg-destructive/10 dark:text-red-200 dark:bg-destructive/5 text-destructive mt-2 rounded-md border p-3 text-sm">
+        <ErrorPrimitive.Message className="line-clamp-2" />
+      </ErrorPrimitive.Root>
+    </MessagePrimitive.Error>
   );
 };
 
@@ -224,7 +283,7 @@ const AssistantActionBar: FC = () => {
       className="text-muted-foreground flex gap-1 col-start-3 row-start-2 -ml-1 data-[floating]:bg-background data-[floating]:absolute data-[floating]:rounded-md data-[floating]:border data-[floating]:p-1 data-[floating]:shadow-sm"
     >
       <ActionBarPrimitive.Copy asChild>
-        <TooltipIconButton tooltip="Copy">
+        <TooltipIconButton tooltip="複製" className="copy-btn">
           <MessagePrimitive.If copied>
             <CheckIcon />
           </MessagePrimitive.If>
@@ -234,7 +293,7 @@ const AssistantActionBar: FC = () => {
         </TooltipIconButton>
       </ActionBarPrimitive.Copy>
       <ActionBarPrimitive.Reload asChild>
-        <TooltipIconButton tooltip="Refresh">
+        <TooltipIconButton tooltip="重新生成">
           <RefreshCwIcon />
         </TooltipIconButton>
       </ActionBarPrimitive.Reload>
@@ -249,10 +308,7 @@ const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
   return (
     <BranchPickerPrimitive.Root
       hideWhenSingleBranch
-      className={cn(
-        "text-muted-foreground inline-flex items-center text-xs",
-        className
-      )}
+      className={cn("text-muted-foreground inline-flex items-center text-xs", className)}
       {...rest}
     >
       <BranchPickerPrimitive.Previous asChild>

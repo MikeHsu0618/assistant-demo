@@ -25,6 +25,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -60,6 +61,7 @@
   --accent: oklch(0.967 0.001 286.375);
   --accent-foreground: oklch(0.21 0.006 285.885);
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.705 0.015 286.067);
@@ -94,6 +96,7 @@
   --accent: oklch(0.274 0.006 286.033);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.552 0.016 285.938);
@@ -118,5 +121,86 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Assistant UI 自定義樣式 */
+@layer components {
+  .aui-button-icon {
+    @apply shrink-0;
+  }
+  
+  .aui-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  
+  /* 修復按鈕樣式 */
+  .copy-button {
+    @apply bg-muted/50 hover:bg-muted border border-border transition-colors;
+  }
+  
+  /* Thread 歡迎提示卡片樣式優化 */
+  .suggestion-card {
+    @apply bg-card hover:bg-muted/50 border border-border rounded-lg p-4 transition-all duration-200 shadow-sm hover:shadow-md;
+  }
+  
+  /* 工具確認界面樣式 */
+  .tool-confirm-card {
+    @apply bg-amber-50 border-amber-200 dark:bg-amber-950/50 dark:border-amber-800;
+  }
+  
+  /* 工具執行結果樣式 */
+  .tool-result-card {
+    @apply bg-emerald-50 border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800;
+  }
+  
+  /* 工具錯誤樣式 */
+  .tool-error-card {
+    @apply bg-red-50 border-red-200 dark:bg-red-950/50 dark:border-red-800;
+  }
+  
+  /* 修復複製按鈕樣式 */
+  .copy-btn {
+    @apply inline-flex items-center justify-center h-8 w-8 rounded-md bg-muted hover:bg-muted/80 transition-colors;
+  }
+  
+  /* 修復 Thread 滾動按鈕 */
+  .scroll-to-bottom {
+    @apply bg-background border border-border shadow-md hover:bg-muted transition-colors;
+  }
+  
+  /* 確保按鈕 hover 效果正常 */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors;
+  }
+  
+  .btn-destructive {
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors;
+  }
+  
+  /* 修復 Markdown 代碼塊樣式 */
+  .aui-md pre {
+    @apply bg-zinc-900 text-white p-4 rounded-b-lg overflow-x-auto;
+  }
+  
+  .aui-md code:not(pre code) {
+    @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+  
+  /* 工具卡片動畫 */
+  .tool-card {
+    @apply transition-all duration-200 hover:shadow-lg hover:scale-[1.02];
   }
 }
