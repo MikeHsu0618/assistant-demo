@@ -36,7 +36,7 @@ export const Assistant = () => {
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
                   <BreadcrumbPage>
-                    類似 Cursor 的互動體驗
+                    智能標題生成 + 類似 Cursor 體驗
                   </BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
