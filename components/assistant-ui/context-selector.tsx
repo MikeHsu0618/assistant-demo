@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useAssistantInstructions, useAssistantRuntime } from "@assistant-ui/react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { X, ChevronDown, Code, Globe, Palette, Database, Settings } from "lucide-react";
+import { X, ChevronDown, Code, Globe, Palette, Database, Settings, Search } from "lucide-react";
 
 // 預設的上下文選項
 const contextOptions = [
@@ -66,6 +66,7 @@ interface ContextSelectorProps {
 export function ContextSelector({ className }: ContextSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedContexts, setSelectedContexts] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   
   // 獲取 assistant runtime
   const runtime = useAssistantRuntime();
@@ -125,10 +126,42 @@ export function ContextSelector({ className }: ContextSelectorProps) {
     setSelectedContexts(prev => prev.filter(id => id !== contextId));
   };
 
+  // 搜尋過濾邏輯
+  const filteredOptions = React.useMemo(() => {
+    if (!searchTerm.trim()) return contextOptions;
+    
+    const term = searchTerm.toLowerCase();
+    return contextOptions.filter(option => 
+      option.label.toLowerCase().includes(term) ||
+      option.instruction.toLowerCase().includes(term)
+    );
+  }, [searchTerm]);
+
   const selectedOptions = contextOptions.filter(opt => selectedContexts.includes(opt.id));
 
+  // 清空搜尋並關閉選單
+  const handleClose = () => {
+    setIsOpen(false);
+    setSearchTerm('');
+  };
+
+  // 點擊外部關閉選單
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('[data-context-selector]')) {
+        handleClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} data-context-selector>
       {/* 主要的下拉按鈕 */}
       <Button
         variant="outline"
@@ -143,22 +176,41 @@ export function ContextSelector({ className }: ContextSelectorProps) {
 
       {/* 向上展開的選單 */}
       {isOpen && (
-        <Card className="absolute bottom-full mb-2 left-0 z-50 w-72 p-3 shadow-lg max-h-80 overflow-y-auto">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-medium text-sm">選擇上下文</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsOpen(false)}
-                className="h-5 w-5 p-0"
-              >
-                <X className="h-3 w-3" />
-              </Button>
+        <Card className="absolute bottom-full mb-2 left-0 z-50 w-80 shadow-lg max-h-96 flex flex-col">
+          {/* 搜尋框區域 */}
+          <div className="p-3 border-b">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="搜尋上下文..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-8 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                autoFocus
+              />
+              {searchTerm && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
             </div>
-            
-            <div className="space-y-1">
-              {contextOptions.map((option) => {
+          </div>
+          
+          {/* 可滾動的選項列表 */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-1">
+            {filteredOptions.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <div className="text-sm">找不到符合條件的上下文</div>
+                <div className="text-xs mt-1">嘗試調整搜尋關鍵字</div>
+              </div>
+            ) : (
+              filteredOptions.map((option) => {
                 const Icon = option.icon;
                 const isSelected = selectedContexts.includes(option.id);
                 
@@ -194,8 +246,8 @@ export function ContextSelector({ className }: ContextSelectorProps) {
                     </div>
                   </div>
                 );
-              })}
-            </div>
+              })
+            )}
           </div>
         </Card>
       )}
