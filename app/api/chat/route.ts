@@ -8,14 +8,29 @@ export const runtime = "edge";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  const { messages, system, tools } = await req.json();
+  const { messages, system, tools, instructions } = await req.json();
+  
+  // 合併系統提示和動態指令
+  const combinedSystem = [
+    system || "",
+    instructions || "", // 動態指令
+  ].filter(Boolean).join("\n\n");
+  
+  // 調試用：記錄動態指令
+  if (instructions) {
+    console.log("🎯 API 收到動態指令:", instructions);
+    console.log("🎯 完整系統提示:", combinedSystem);
+  } else {
+    console.log("❌ 未收到動態指令");
+  }
 
   const result = streamText({
     model: openai("gpt-4o"),
     messages,
     toolCallStreaming: true,
     system: [
-      system || "",
+      combinedSystem,
+      "",
       "你是一個智能 AI 助手，擁有多種工具能力：",
       "- getWeather: 查詢天氣資訊（會要求用戶確認）",
       "- calculator: 數學計算，無需確認", 

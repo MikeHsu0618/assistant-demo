@@ -13,7 +13,8 @@ import {
   SmartPageNavigationTool,
   SmartPageActionTool,
   SmartNavigation,
-  SmartPageContainer
+  SmartPageContainer,
+  ContextSelector
 } from "@/components/assistant-ui/tool-ui";
 
 // 頁面內容定義 (保持不變)
@@ -157,6 +158,7 @@ const pages = {
 
 export default function SmartDemoPage() {
   const [currentPage, setCurrentPage] = useState<keyof typeof pages>('dashboard');
+  const [dynamicInstructions, setDynamicInstructions] = useState<string>('');
   
   // 處理 URL hash 和初始化頁面
   React.useEffect(() => {
@@ -183,10 +185,18 @@ export default function SmartDemoPage() {
         title: pages[key as keyof typeof pages].title
       }));
     };
+
+    // 設置全域函數供 ContextSelector 使用
+    (window as any).setDynamicInstructions = (instructions: string) => {
+      console.log("🎯 全域設置動態指令:", instructions);
+      setDynamicInstructions(instructions);
+    };
   }, []);
 
   const runtime = useChatRuntime({
     api: "/api/chat",
+    // 將動態指令傳遞到 API
+    body: dynamicInstructions ? { instructions: dynamicInstructions } : undefined,
   });
 
   return (

@@ -111,7 +111,7 @@ export const SmartPageActionTool = makeAssistantTool({
 interface SmartNavigationProps {
   currentPage: string;
   pages: Record<string, { title: string; content: React.ReactNode }>;
-  setCurrentPage: (page: string) => void;
+  setCurrentPage: (page: any) => void;
 }
 
 export function SmartNavigation({ currentPage, pages, setCurrentPage }: SmartNavigationProps) {

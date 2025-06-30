@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { MarkdownText } from "@/components/assistant-ui/markdown-text";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
+import { ContextSelector } from "@/components/assistant-ui/context-selector";
 
 export const Thread: FC = () => {
   return (
@@ -49,6 +50,9 @@ export const Thread: FC = () => {
 
         <div className="sticky bottom-0 mt-3 flex w-full max-w-[var(--thread-max-width)] flex-col items-center justify-end rounded-t-lg bg-inherit pb-4">
           <ThreadScrollToBottom />
+          <div className="w-full mb-3">
+            <ContextSelector className="w-full" />
+          </div>
           <Composer />
         </div>
       </ThreadPrimitive.Viewport>
