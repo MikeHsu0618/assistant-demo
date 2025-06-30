@@ -81,6 +81,9 @@ const ThreadWelcome: FC = () => {
           <p className="mt-2 text-sm text-muted-foreground text-center">
             體驗 AI 助手的強大功能：天氣查詢、數學計算、頁面導覽和創意寫作
           </p>
+          <p className="mt-2 text-xs text-blue-600 text-center">
+            💡 想體驗 AI 助手的頁面互動功能？試試說 "帶我到 Demo 頁面"
+          </p>
         </div>
         <ThreadWelcomeSuggestions />
       </div>
@@ -117,13 +120,13 @@ const ThreadWelcomeSuggestions: FC = () => {
       
       <ThreadPrimitive.Suggestion
         className="suggestion-card flex flex-col items-center justify-center min-h-[80px] cursor-pointer group"
-        prompt="帶我回到首頁"
+        prompt="帶我到 Demo 頁面體驗 AssistantSidebar"
         method="replace"
         autoSend
       >
-        <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">🧭</span>
+        <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">🎨</span>
         <span className="line-clamp-2 text-ellipsis text-xs font-medium text-center text-muted-foreground group-hover:text-foreground transition-colors">
-          頁面導覽
+          Demo 展示
         </span>
       </ThreadPrimitive.Suggestion>
       

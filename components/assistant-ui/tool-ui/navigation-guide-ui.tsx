@@ -12,14 +12,19 @@ import {
   CheckCircle, 
   XCircle,
   Navigation,
-  ExternalLink
+  ExternalLink,
+  Layout,
+  BarChart3,
+  User,
+  Settings,
+  Info
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 // 導覽工具的輸入參數類型
 type NavigationArgs = {
-  target: "homepage" | "chat" | "top" | "bottom" | "refresh";
+  target: "homepage" | "chat" | "top" | "bottom" | "refresh" | "demo" | "dashboard" | "profile" | "settings" | "about";
   reason: string;
 };
 
@@ -64,6 +69,36 @@ const navigationTargets = {
     icon: RefreshCw, 
     description: "重新載入當前頁面",
     action: "refresh_page"
+  },
+  demo: { 
+    label: "Demo 頁面", 
+    icon: Layout, 
+    description: "前往 AssistantSidebar 展示頁面",
+    action: "navigate_demo"
+  },
+  dashboard: { 
+    label: "儀表板", 
+    icon: BarChart3, 
+    description: "前往儀表板頁面",
+    action: "navigate_dashboard"
+  },
+  profile: { 
+    label: "個人資料", 
+    icon: User, 
+    description: "前往個人資料頁面",
+    action: "navigate_profile"
+  },
+  settings: { 
+    label: "設定", 
+    icon: Settings, 
+    description: "前往系統設定頁面",
+    action: "navigate_settings"
+  },
+  about: { 
+    label: "關於我們", 
+    icon: Info, 
+    description: "前往關於我們頁面",
+    action: "navigate_about"
   },
 };
 
@@ -125,6 +160,69 @@ async function executeNavigation(args: NavigationArgs): Promise<NavigationResult
         window.location.reload();
         success = true;
         message = `正在${target.label}...`;
+        break;
+        
+      case "demo":
+        // 導航到 demo 頁面
+        window.location.href = "/demo";
+        success = true;
+        message = `已導航到${target.label}`;
+        break;
+        
+      case "dashboard":
+        // 檢查是否在 demo 頁面，如果是則直接導覽
+        if (window.location.pathname === "/demo" && (window as any).navigateToPage) {
+          (window as any).navigateToPage("dashboard");
+          success = true;
+          message = `已導覽到${target.label}`;
+        } else {
+          // 否則先導航到 demo 頁面再跳轉到儀表板
+          window.location.href = "/demo#dashboard";
+          success = true;
+          message = `已導航到${target.label}`;
+        }
+        break;
+        
+      case "profile":
+        // 檢查是否在 demo 頁面，如果是則直接導覽
+        if (window.location.pathname === "/demo" && (window as any).navigateToPage) {
+          (window as any).navigateToPage("profile");
+          success = true;
+          message = `已導覽到${target.label}`;
+        } else {
+          // 否則先導航到 demo 頁面再跳轉到個人資料
+          window.location.href = "/demo#profile";
+          success = true;
+          message = `已導航到${target.label}`;
+        }
+        break;
+        
+      case "settings":
+        // 檢查是否在 demo 頁面，如果是則直接導覽
+        if (window.location.pathname === "/demo" && (window as any).navigateToPage) {
+          (window as any).navigateToPage("settings");
+          success = true;
+          message = `已導覽到${target.label}`;
+        } else {
+          // 否則先導航到 demo 頁面再跳轉到設定
+          window.location.href = "/demo#settings";
+          success = true;
+          message = `已導航到${target.label}`;
+        }
+        break;
+        
+      case "about":
+        // 檢查是否在 demo 頁面，如果是則直接導覽
+        if (window.location.pathname === "/demo" && (window as any).navigateToPage) {
+          (window as any).navigateToPage("about");
+          success = true;
+          message = `已導覽到${target.label}`;
+        } else {
+          // 否則先導航到 demo 頁面再跳轉到關於我們
+          window.location.href = "/demo#about";
+          success = true;
+          message = `已導航到${target.label}`;
+        }
         break;
         
       default:

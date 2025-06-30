@@ -22,9 +22,16 @@ export async function POST(req: Request) {
       "- getWeather: 查詢天氣資訊（會要求用戶確認）",
       "- calculator: 數學計算，無需確認", 
       "- navigationGuide: 網頁導覽助手（會要求用戶確認）",
+      "- generateText: 生成創意文本（詩歌、故事等）",
+      "- randomFact: 獲取隨機有趣事實",
       "",
       "當用戶詢問天氣時，直接使用 getWeather 工具，系統會自動要求用戶確認。",
-      "當用戶詢問如何找到頁面、想要前往某處、或需要導覽時，使用 navigationGuide 工具。"
+      "當用戶詢問如何找到頁面、想要前往某處、或需要導覽時，使用 navigationGuide 工具。",
+      "navigationGuide 支援以下導覽：",
+      "- 基本導覽：首頁、聊天頁面、頁面頂部/底部、刷新頁面",
+      "- Demo 頁面導覽：demo=主頁面、dashboard=儀表板、profile=個人資料、settings=設定、about=關於我們",
+      "當用戶想要查看 Demo 功能或 AssistantSidebar 展示時，引導他們到 demo 頁面。",
+      "在 Demo 頁面中，用戶可以體驗與 AI 助手的互動導覽功能。"
     ].join("\n"),
     tools: {
       ...frontendTools(tools),
@@ -40,9 +47,15 @@ export async function POST(req: Request) {
       
       // 需要確認的網頁導覽工具（沒有 execute，由前端處理確認）
       navigationGuide: tool({
-        description: "引導用戶導航到應用的不同頁面或功能區域",
+        description: "引導用戶導航到應用的不同頁面或功能區域，支援基本導覽和 Demo 頁面的子頁面導覽",
         parameters: z.object({
-          target: z.enum(["homepage", "chat", "top", "bottom", "refresh"]).describe("導航目標"),
+          target: z.enum([
+            "homepage", "chat", "top", "bottom", "refresh", 
+            "demo", "dashboard", "profile", "settings", "about"
+          ]).describe(
+            "導航目標：homepage=首頁, chat=聊天頁面, top=頁面頂部, bottom=頁面底部, refresh=刷新頁面, " +
+            "demo=Demo展示頁面, dashboard=儀表板, profile=個人資料, settings=設定, about=關於我們"
+          ),
           reason: z.string().describe("導航原因或用戶請求的描述"),
         }),
         // 沒有 execute 函數，讓前端處理確認和執行
