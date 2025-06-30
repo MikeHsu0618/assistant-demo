@@ -7,7 +7,7 @@ export const maxDuration = 30;
 
 // 標題生成的 schema
 const titleSchema = z.object({
-  title: z.string().min(2).max(50).describe("對話的簡潔標題，2-8個中文字或2-6個英文詞"),
+  title: z.string().min(2).max(50).describe("對話的簡潔標題，2-8個中文字"),
 });
 
 interface Message {
@@ -23,48 +23,38 @@ export async function POST(req: Request) {
       return Response.json({ error: "No messages provided" }, { status: 400 });
     }
 
-    // 取最近的幾條消息來分析
-    const recentMessages = messages.slice(-6); // 最多取6條消息
+    // 取最近幾條消息分析
+    const recentMessages = messages.slice(-4);
     
-    // 構建用於分析的上下文，正確提取文本內容
-    const conversationContext = recentMessages
-      .map((msg: Message) => `${msg.role}: ${extractTextFromContent(msg.content)}`)
+    // 提取文本內容
+    const conversationText = recentMessages
+      .map(msg => `${msg.role}: ${extractTextFromContent(msg.content)}`)
       .join('\n');
 
-    // 使用 generateObject 確保結構化輸出
+    // 生成標題
     const result = await generateObject({
-      model: openai("gpt-4o-mini"), // 使用更便宜的模型
-      prompt: `請基於以下對話內容生成一個簡潔有意義的標題：
+      model: openai("gpt-4o-mini"),
+      prompt: `分析以下對話，生成一個簡潔的中文標題（2-8個字）：
 
-${conversationContext}
+${conversationText}
 
-要求：
-- 中文標題：2-8個字
-- 英文標題：2-6個詞  
-- 體現對話的核心話題
-- 避免使用「新對話」、「聊天」等無意義的詞語
-- 如果是技術討論，使用具體的技術術語
-- 如果是問答，突出關鍵問題
-- 保持簡潔專業`,
+要求：體現核心話題，避免「新對話」等無意義詞語。`,
       schema: titleSchema,
     });
 
     return Response.json({ 
-      title: result.object.title,
-      success: true 
+      title: result.object.title 
     });
 
   } catch (error) {
     console.error("標題生成失敗:", error);
     return Response.json({ 
-      title: "新對話", 
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
+      title: "新對話"
     }, { status: 500 });
   }
 }
 
-// 從消息內容中提取文本
+// 提取文本內容
 function extractTextFromContent(content: any): string {
   if (typeof content === "string") {
     return content;
@@ -72,8 +62,8 @@ function extractTextFromContent(content: any): string {
   
   if (Array.isArray(content)) {
     return content
-      .filter((part: any) => part.type === "text")
-      .map((part: any) => part.text)
+      .filter(part => part.type === "text")
+      .map(part => part.text)
       .join(" ");
   }
   

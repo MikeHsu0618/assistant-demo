@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { useThreadListItemRuntime, useThreadRuntime } from "@assistant-ui/react";
+import { useThreadRuntime } from "@assistant-ui/react";
+
+interface GeneratedTitle {
+  title: string;
+}
 
 /**
  * 自動標題生成 Hook
@@ -11,118 +15,84 @@ import { useThreadListItemRuntime, useThreadRuntime } from "@assistant-ui/react"
  * 4. 使用本地狀態管理標題顯示
  */
 export function useAutoTitleGeneration() {
-  const threadListItemRuntime = useThreadListItemRuntime();
   const threadRuntime = useThreadRuntime();
-  
-  // 防重複機制
-  const hasAttemptedGeneration = useRef(false);
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const isRequestInProgress = useRef(false);
-  
-  // 狀態管理
   const [generatedTitle, setGeneratedTitle] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const hasGeneratedRef = useRef(false);
 
-  // 核心標題生成邏輯
-  const performTitleGeneration = async () => {
-    if (isRequestInProgress.current || isGenerating) return;
+  const generateTitle = async (force = false) => {
+    if (!threadRuntime) return;
     
-    try {
-      isRequestInProgress.current = true;
-      setIsGenerating(true);
-      
-      const messages = threadRuntime.getState().messages;
-      if (messages.length < 2) return;
-      
-      // 轉換消息格式
-      const formattedMessages = messages.map((msg: any) => ({
-        role: msg.role,
-        content: msg.content.map((part: any) => 
-          part.type === 'text' ? { type: 'text', text: part.text } : part
-        )
-      }));
+    const state = threadRuntime.getState();
+    const messages = state.messages;
+    
+    // 檢查是否需要生成標題
+    if (!force && (
+      hasGeneratedRef.current ||
+      state.isRunning ||
+      messages.length < 2
+    )) {
+      return;
+    }
 
-      const response = await fetch("/api/chat/generate-title", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: formattedMessages }),
+    try {
+      setIsGenerating(true);
+      hasGeneratedRef.current = true;
+
+      const response = await fetch('/api/chat/generate-title', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messages }),
       });
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      
-      const result = await response.json();
-      
-      if (result.title && result.title !== '新對話') {
-        setGeneratedTitle(result.title);
-        hasAttemptedGeneration.current = true;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data: GeneratedTitle = await response.json();
+      setGeneratedTitle(data.title);
+      
     } catch (error) {
       console.error('標題生成失敗:', error);
+      setGeneratedTitle('新對話');
     } finally {
       setIsGenerating(false);
-      isRequestInProgress.current = false;
     }
   };
 
-  // 檢查是否應該生成標題
-  const shouldGenerateTitle = () => {
-    if (hasAttemptedGeneration.current) return false;
-    
-    try {
-      const state = threadListItemRuntime.getState();
-      const messages = threadRuntime.getState().messages;
-      
-      return (
-        state?.status === 'regular' &&
-        messages.length >= 2 &&
-        (!state.title || state.title === 'New Chat' || state.title === '新對話')
-      );
-    } catch {
-      return false;
-    }
-  };
-
-  // 自動生成標題
+  // 監聽對話狀態變化
   useEffect(() => {
-    if (hasAttemptedGeneration.current) return;
-    
-    const handleUpdate = () => {
-      // 防抖：清除之前的定時器
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
+    if (!threadRuntime) return;
+
+    const unsubscribe = threadRuntime.subscribe(() => {
+      const state = threadRuntime.getState();
       
-      // 延遲檢查，確保對話完成
-      debounceTimeoutRef.current = setTimeout(() => {
-        if (shouldGenerateTitle()) {
-          performTitleGeneration();
-        }
-      }, 2000);
-    };
-
-    // 只訂閱 thread runtime 變化（避免重複訂閱）
-    const unsubscribe = threadRuntime.subscribe(handleUpdate);
-    
-    return () => {
-      unsubscribe();
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
+      // 當對話完成時生成標題
+      if (!state.isRunning && 
+          state.messages.length >= 2 &&
+          !hasGeneratedRef.current) {
+        
+        // 延遲生成，確保對話完成
+        setTimeout(() => {
+          generateTitle();
+        }, 2000);
       }
-    };
-  }, [threadListItemRuntime, threadRuntime]);
+    });
 
-  // 手動生成標題
-  const generateTitle = async () => {
-    // 重置狀態以允許重新生成
-    hasAttemptedGeneration.current = false;
-    setGeneratedTitle(null);
-    await performTitleGeneration();
+    return unsubscribe;
+  }, [threadRuntime]);
+
+  // 手動刷新標題
+  const refreshTitle = () => {
+    hasGeneratedRef.current = false;
+    generateTitle(true);
   };
 
   return {
-    generateTitle,
-    hasGenerated: hasAttemptedGeneration.current,
     generatedTitle,
-    isGenerating
+    isGenerating,
+    refreshTitle,
   };
 }

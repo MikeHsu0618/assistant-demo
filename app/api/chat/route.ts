@@ -10,13 +10,6 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   const { messages, system, tools, instructions } = await req.json();
   
-  // 檢查是否是標題生成請求
-  const isGeneratingTitle = detectTitleGenerationRequest(messages, system);
-  
-  if (isGeneratingTitle) {
-    return handleTitleGeneration(messages);
-  }
-  
   // 合併系統提示和動態指令
   const combinedSystem = [
     system || "",
@@ -186,83 +179,4 @@ export async function POST(req: Request) {
   });
 
   return result.toDataStreamResponse();
-}
-
-// 檢測是否是標題生成請求
-function detectTitleGenerationRequest(messages: unknown[], system?: string): boolean {
-  // assistant-ui 的 generateTitle() 會發送特殊的系統提示
-  const isAssistantUITitleRequest = system?.includes("Generate a title") || 
-                                    system?.includes("generate title") ||
-                                    system?.includes("Generate a concise title") ||
-                                    system?.includes("title generation");
-  
-  // 檢查是否有足夠的對話內容
-  const hasConversation = messages && messages.length >= 2;
-  
-  // 檢查特殊的請求標記
-  const hasSpecialMarker = system?.includes("__TITLE_GENERATION__");
-  
-  return Boolean(isAssistantUITitleRequest || hasSpecialMarker || 
-         (hasConversation && system?.toLowerCase()?.includes("title")));
-}
-
-// 處理標題生成請求
-async function handleTitleGeneration(messages: unknown[]) {
-  try {
-    console.log("🎯 處理標題生成請求...");
-    
-    // 直接使用我們的標題生成邏輯（避免循環請求）
-    const { openai } = await import("@ai-sdk/openai");
-    const { generateObject } = await import("ai");
-    const { z } = await import("zod");
-    
-    if (!messages || messages.length === 0) {
-      throw new Error("No messages provided");
-    }
-
-    // 取最近的幾條消息來分析
-    const recentMessages = messages.slice(-6);
-    
-    // 構建用於分析的上下文
-    const conversationContext = recentMessages
-      .map((msg: { role: string; content: string }) => `${msg.role}: ${msg.content}`)
-      .join('\n');
-
-    // 標題生成的 schema
-    const titleSchema = z.object({
-      title: z.string().min(2).max(50).describe("對話的簡潔標題，2-8個中文字或2-6個英文詞"),
-    });
-
-    // 使用 generateObject 確保結構化輸出
-    const result = await generateObject({
-      model: openai("gpt-4o-mini"),
-      prompt: `請基於以下對話內容生成一個簡潔有意義的標題：
-
-${conversationContext}
-
-要求：
-- 中文標題：2-8個字
-- 英文標題：2-6個詞  
-- 體現對話的核心話題
-- 避免使用「新對話」、「聊天」等無意義的詞語
-- 如果是技術討論，使用具體的技術術語
-- 如果是問答，突出關鍵問題
-- 保持簡潔專業`,
-      schema: titleSchema,
-    });
-
-    const title = result.object.title;
-    console.log("✅ 標題生成成功:", title);
-    
-    // 返回符合 assistant-ui 期望的格式
-    return new Response(title, {
-      headers: { "Content-Type": "text/plain" },
-    });
-
-  } catch (error) {
-    console.error("❌ 標題生成錯誤:", error);
-    return new Response("新對話", {
-      headers: { "Content-Type": "text/plain" },
-    });
-  }
 }
