@@ -2,12 +2,10 @@ import { openai } from "@ai-sdk/openai";
 import { frontendTools } from "@assistant-ui/react-ai-sdk";
 import { streamText, tool } from "ai";
 import { z } from "zod";
-import { calculatorTool } from "@/lib/tools";
+import { calculatorTool } from "@/lib/tools/calculator-tool";
 
 export const runtime = "edge";
-export const maxDuration = 30;
-
-
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   const { messages, system, tools } = await req.json();
@@ -18,20 +16,29 @@ export async function POST(req: Request) {
     toolCallStreaming: true,
     system: [
       system || "",
-      "你是一個 AI 助手，擁有多種工具能力：",
+      "你是一個智能 AI 助手，擁有多種工具能力：",
       "- getWeather: 查詢天氣資訊（會要求用戶確認）",
       "- calculator: 數學計算，無需確認", 
-      "- navigationGuide: 網頁導覽助手（會要求用戶確認）",
+      "- navigationGuide: 網頁導航助手（會要求用戶確認）- 傳統工具",
+      "- navigateToPage: 智能頁面導航（直接執行）- 新智能工具",
+      "- pageAction: 頁面操作（滾動、刷新）- 新智能工具",
       "- generateText: 生成創意文本（詩歌、故事等）",
       "- randomFact: 獲取隨機有趣事實",
       "",
-      "當用戶詢問天氣時，直接使用 getWeather 工具，系統會自動要求用戶確認。",
-      "當用戶詢問如何找到頁面、想要前往某處、或需要導覽時，使用 navigationGuide 工具。",
-      "navigationGuide 支援以下導覽：",
-      "- 基本導覽：首頁、聊天頁面、頁面頂部/底部、刷新頁面",
-      "- Demo 頁面導覽：demo=主頁面、dashboard=儀表板、profile=個人資料、settings=設定、about=關於我們",
+      "**智能組件功能（新）：**",
+      "在 Demo 頁面中，你可以直接與頁面元素互動：",
+      "1. 直接點擊導航按鈕幫用戶切換頁面",
+      "2. 理解頁面內容並提供相關建議",
+      "3. 使用 navigateToPage 工具快速導航",
+      "4. 使用 pageAction 工具進行頁面操作",
+      "",
+      "**使用建議：**",
+      "- 頁面導航：優先使用智能按鈕或 navigateToPage",
+      "- 頁面操作：使用 pageAction 工具",
+      "- 複雜導航：仍可使用傳統 navigationGuide（有確認機制）",
+      "",
       "當用戶想要查看 Demo 功能或 AssistantSidebar 展示時，引導他們到 demo 頁面。",
-      "在 Demo 頁面中，用戶可以體驗與 AI 助手的互動導覽功能。"
+      "在 Demo 頁面中，你可以展示智能組件的強大功能！"
     ].join("\n"),
     tools: {
       ...frontendTools(tools),
@@ -45,9 +52,9 @@ export async function POST(req: Request) {
         // 沒有 execute 函數，讓前端處理確認和執行
       }),
       
-      // 需要確認的網頁導覽工具（沒有 execute，由前端處理確認）
+      // 需要確認的網頁導航工具（沒有 execute，由前端處理確認）
       navigationGuide: tool({
-        description: "引導用戶導航到應用的不同頁面或功能區域，支援基本導覽和 Demo 頁面的子頁面導覽",
+        description: "引導用戶導航到應用的不同頁面或功能區域，支持基本導航和 Demo 頁面的子頁面導航",
         parameters: z.object({
           target: z.enum([
             "homepage", "chat", "top", "bottom", "refresh", 
@@ -59,6 +66,42 @@ export async function POST(req: Request) {
           reason: z.string().describe("導航原因或用戶請求的描述"),
         }),
         // 沒有 execute 函數，讓前端處理確認和執行
+      }),
+
+      // 新的智能導航工具（有 execute，直接執行）
+      navigateToPage: tool({
+        description: "智能頁面導航工具，直接切換到指定頁面（無需確認）",
+        parameters: z.object({
+          pageId: z.enum(['dashboard', 'profile', 'settings', 'about']).describe('要導航的頁面 ID'),
+          reason: z.string().describe('導航原因'),
+        }),
+        execute: async ({ pageId, reason }) => {
+          // 這個工具會被前端的 SmartPageNavigationTool 攔截並執行
+          return { 
+            success: true, 
+            message: `導航到 ${pageId} 頁面`,
+            pageId,
+            reason 
+          };
+        },
+      }),
+
+      // 新的頁面操作工具（有 execute，直接執行）
+      pageAction: tool({
+        description: "頁面操作工具，執行滾動和刷新操作（無需確認）",
+        parameters: z.object({
+          action: z.enum(['scroll_to_top', 'scroll_to_bottom', 'refresh_page']).describe('頁面操作類型'),
+          reason: z.string().describe('執行原因'),
+        }),
+        execute: async ({ action, reason }) => {
+          // 這個工具會被前端的 SmartPageActionTool 攔截並執行
+          return { 
+            success: true, 
+            message: `執行 ${action} 操作`,
+            action,
+            reason 
+          };
+        },
       }),
       
       calculator: calculatorTool,
